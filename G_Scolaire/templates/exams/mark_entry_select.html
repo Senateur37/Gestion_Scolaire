@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Saisie des Notes — G-Scolaire{% endblock %}
+{% block content %}
+<div class="mb-8">
+    <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Notes & Évaluations</p>
+    <h1 class="text-3xl font-bold text-white tracking-tight">Saisie des Notes</h1>
+    <p class="text-slate-400 mt-1 text-sm">Choisissez une classe et une session pour saisir les notes.</p>
+</div>
+
+<div class="card-glass rounded-2xl p-8 max-w-xl mx-auto">
+    <form method="GET" action="{% url 'exams:mark_entry_class' 0 0 %}" id="selectForm">
+        <div class="space-y-5">
+            <!-- Classe -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-2">
+                    <i class="fa-solid fa-school mr-1.5 text-brand-400"></i> Classe
+                </label>
+                <select name="class_id" id="class_id" class="w-full bg-slate-800/60 border border-slate-600/50 text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-colors" required>
+                    <option value="">— Sélectionner une classe —</option>
+                    {% for cls in classes %}
+                    <option value="{{ cls.pk }}">{{ cls }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Session -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-2">
+                    <i class="fa-solid fa-calendar-check mr-1.5 text-purple-400"></i> Session d'examen
+                </label>
+                <select name="session_id" id="session_id" class="w-full bg-slate-800/60 border border-slate-600/50 text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-colors" required>
+                    <option value="">— Sélectionner une session —</option>
+                    {% for session in sessions %}
+                    <option value="{{ session.pk }}">{{ session.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" id="goBtn"
+                class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-table-list"></i> Ouvrir la grille de saisie
+            </button>
+        </div>
+    </form>
+
+    {% if not sessions %}
+    <div class="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm text-amber-300 flex items-start gap-3">
+        <i class="fa-solid fa-triangle-exclamation mt-0.5 flex-shrink-0"></i>
+        <span>Aucune session d'examen active. <a href="{% url 'exams:session_create' %}" class="text-brand-400 underline hover:no-underline">Créez-en une d'abord.</a></span>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('selectForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const cls = document.getElementById('class_id').value;
+    const sess = document.getElementById('session_id').value;
+    if (cls && sess) {
+        // Build URL with Django's exams:mark_entry_class pattern
+        const base = "{% url 'exams:mark_entry_class' 0 0 %}";
+        const url = base.replace('/0/session/0/', '/' + cls + '/session/' + sess + '/');
+        window.location.href = url;
+    }
+});
+</script>
+{% endblock %}

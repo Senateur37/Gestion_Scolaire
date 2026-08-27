@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load school_tags %}
+
+{% block title %}Espace Parents — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Espace Famille</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Bonjour, {{ user.get_full_name|default:user.username }} 👋</h1>
+        <p class="text-slate-400 mt-1 text-sm">Suivi pédagogique, assiduité et scolarité de vos enfants.</p>
+    </div>
+    {% if active_session %}
+    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+        <i class="fa-solid fa-calendar-check text-purple-400"></i> Session Active : {{ active_session.name }}
+    </div>
+    {% endif %}
+</div>
+
+{% if children_data %}
+    <!-- BOUCLE SUR CHAQUE ENFANT -->
+    <div class="space-y-10 mb-10">
+        {% for child in children_data %}
+        <div class="card-glass rounded-3xl p-6 sm:p-8 border border-brand-500/20 shadow-xl relative overflow-hidden">
+            <!-- Bandeau décoratif en haut de la carte de l'enfant -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-white/10 gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="h-16 w-16 rounded-2xl bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center font-extrabold text-2xl shadow-lg">
+                        {{ child.student.user.first_name|first|upper }}
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">{{ child.student.user.get_full_name }}</h2>
+                        <p class="text-sm text-slate-400 mt-0.5 flex items-center gap-2">
+                            <span>Classe : <strong class="text-brand-300">{{ child.school_class|default:"Non assignée" }}</strong></span>
+                            <span>•</span>
+                            <span>Matricule : <strong class="text-white font-mono">{{ child.student.registration_number }}</strong></span>
+                        </p>
+                    </div>
+                </div>
+                {% if active_session %}
+                <a href="{% url 'exams:bulletin_student' child.student.pk active_session.pk %}" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-purple-500/20 flex items-center gap-2 self-start sm:self-auto">
+                    <i class="fa-solid fa-scroll"></i> Bulletin Officiel
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- 3 METRICS PRINCIPAUX DE L'ENFANT -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <!-- Moyenne -->
+                <div class="bg-slate-800/40 rounded-2xl p-4 border border-white/5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Moyenne Générale</p>
+                        {% if child.average is not None %}
+                        <p class="text-2xl font-extrabold mt-1 {% if child.average >= 14 %}text-emerald-400{% elif child.average >= 10 %}text-amber-400{% else %}text-red-400{% endif %}">
+                            {{ child.average }}<span class="text-xs text-slate-400 font-normal">/20</span>
+                        </p>
+                        {% else %}
+                        <p class="text-xl font-bold text-slate-500 mt-1">—</p>
+                        {% endif %}
+                    </div>
+                    <div class="h-10 w-10 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                </div>
+
+                <!-- Absences -->
+                <div class="bg-slate-800/40 rounded-2xl p-4 border border-white/5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Absences & Retards</p>
+                        <p class="text-2xl font-extrabold text-white mt-1">
+                            <span class="{% if child.absences_count > 0 %}text-orange-400{% endif %}">{{ child.absences_count }} abs.</span>
+                            <span class="text-xs text-slate-400 font-normal">/ {{ child.late_count }} retard(s)</span>
+                        </p>
+                    </div>
+                    <div class="h-10 w-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-user-clock"></i>
+                    </div>
+                </div>
+
+                <!-- Scolarité / Paiements -->
+                <div class="bg-slate-800/40 rounded-2xl p-4 border border-white/5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Scolarité (Reste à payer)</p>
+                        <p class="text-2xl font-extrabold mt-1 {% if child.remaining > 0 %}text-amber-400{% else %}text-emerald-400{% endif %}">
+                            {{ child.remaining|fcfa }}
+                        </p>
+                    </div>
+                    <div class="h-10 w-10 rounded-xl {% if child.remaining > 0 %}bg-amber-500/20 text-amber-400{% else %}bg-emerald-500/20 text-emerald-400{% endif %} flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2 COLONNES : NOTES VS ASSIDUITÉ -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Résultats récents -->
+                <div class="bg-slate-800/30 rounded-2xl p-5 border border-white/5">
+                    <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-marker text-brand-400"></i> Dernières Notes d'Évaluation
+                    </h3>
+                    <div class="space-y-2.5">
+                        {% for grade in child.grades %}
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 border border-white/5">
+                            <div>
+                                <p class="text-sm font-semibold text-white">{{ grade.subject.name }}</p>
+                                <p class="text-xs text-slate-400">{{ grade.exam_session.name }}</p>
+                            </div>
+                            <span class="text-sm font-bold px-2.5 py-1 rounded-lg {% if grade.marks_obtained >= 14 %}bg-emerald-500/10 text-emerald-400{% elif grade.marks_obtained >= 10 %}bg-amber-500/10 text-amber-400{% else %}bg-red-500/10 text-red-400{% endif %}">
+                                {{ grade.marks_obtained }}/{{ grade.total_marks|floatformat:0 }}
+                            </span>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-slate-500 text-center py-4">Aucune note enregistrée récemment.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Assiduité récente -->
+                <div class="bg-slate-800/30 rounded-2xl p-5 border border-white/5">
+                    <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-user-slash text-orange-400"></i> Registre des Présences
+                    </h3>
+                    <div class="space-y-2.5">
+                        {% for att in child.recent_attendances %}
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 border border-white/5">
+                            <div>
+                                <p class="text-sm font-semibold text-white">{{ att.date|date:"d F Y" }}</p>
+                                {% if att.justification %}
+                                <p class="text-xs text-slate-400 italic">Justifié: {{ att.justification }}</p>
+                                {% endif %}
+                            </div>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg {% if att.status == 'ABSENT' %}bg-red-500/20 text-red-400{% elif att.status == 'LATE' %}bg-amber-500/20 text-amber-400{% else %}bg-emerald-500/20 text-emerald-400{% endif %}">
+                                {{ att.get_status_display }}
+                            </span>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-6 text-slate-400">
+                            <i class="fa-solid fa-circle-check text-emerald-400 text-xl mb-1"></i>
+                            <p class="text-xs">Aucune absence signalée.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ÉTAT DES PAIEMENTS DE L'ENFANT -->
+            <div class="bg-slate-800/30 rounded-2xl p-5 border border-white/5">
+                <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-receipt text-teal-400"></i> État Financier de la Scolarité
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-white/5">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-400">Intitulé</th>
+                                <th class="px-4 py-2 text-center text-xs font-semibold text-slate-400">Échéance</th>
+                                <th class="px-4 py-2 text-center text-xs font-semibold text-slate-400">Montant Total</th>
+                                <th class="px-4 py-2 text-center text-xs font-semibold text-slate-400">Versé</th>
+                                <th class="px-4 py-2 text-center text-xs font-semibold text-slate-400">Reste</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-slate-400">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for payment in child.payments %}
+                            <tr>
+                                <td class="px-4 py-2.5 text-xs text-white font-medium">{{ payment.description }}</td>
+                                <td class="px-4 py-2.5 text-xs text-center text-slate-400">{{ payment.due_date|date:"d/m/Y" }}</td>
+                                <td class="px-4 py-2.5 text-xs text-center text-slate-300 font-semibold">{{ payment.amount|fcfa }}</td>
+                                <td class="px-4 py-2.5 text-xs text-center text-emerald-400 font-semibold">{{ payment.amount_paid|fcfa }}</td>
+                                <td class="px-4 py-2.5 text-xs text-center text-amber-400 font-semibold">{{ payment.remaining_amount|fcfa }}</td>
+                                <td class="px-4 py-2.5 text-xs text-right">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-bold {% if payment.status == 'PAID' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% elif payment.status == 'PARTIAL' %}bg-blue-500/10 text-blue-400 border border-blue-500/20{% else %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% endif %}">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-4 py-4 text-center text-xs text-slate-500">Aucun frais enregistré pour cet élève.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card-glass rounded-3xl p-12 text-center text-slate-400 max-w-xl mx-auto">
+        <i class="fa-solid fa-children text-4xl text-slate-500 mb-3"></i>
+        <h3 class="text-xl font-bold text-white mb-1">Aucun enfant rattaché</h3>
+        <p class="text-sm">Votre compte parent n'est associé à aucun élève. Veuillez contacter l'administration de l'établissement pour faire le rattachement.</p>
+    </div>
+{% endif %}
+
+<!-- SECTION : ANNONCES ET COMMUNICATIONS DE L'ÉCOLE -->
+<div class="card-glass rounded-3xl p-6 sm:p-8">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-bullhorn text-purple-400"></i> Communications de l'Établissement
+        </h3>
+        <a href="{% url 'communication:announcement_list' %}" class="text-xs text-purple-400 hover:text-purple-300">Toutes les communications</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for ann in announcements %}
+        <div class="p-4 rounded-2xl bg-slate-800/40 border border-white/5">
+            <div class="flex items-center justify-between mb-1.5">
+                <h4 class="text-sm font-bold text-white">{{ ann.title }}</h4>
+                <span class="text-xs text-slate-500">{{ ann.date_created|date:"d M Y" }}</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">{{ ann.content }}</p>
+        </div>
+        {% empty %}
+        <p class="col-span-full text-sm text-slate-500 text-center py-6">Aucune annonce pour les parents pour le moment.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

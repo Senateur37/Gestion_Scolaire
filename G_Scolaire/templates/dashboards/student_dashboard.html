@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Espace Élève — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Espace Élève</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Bonjour, {{ user.get_full_name|default:user.username }} 👋</h1>
+        <p class="text-slate-400 mt-1 text-sm">
+            Matricule : <span class="text-white font-mono font-semibold">{{ student.registration_number|default:"Non assigné" }}</span>
+            {% if school_class %} • Classe : <span class="text-brand-300 font-semibold">{{ school_class }}</span>{% endif %}
+        </p>
+    </div>
+    {% if active_session and student %}
+    <a href="{% url 'exams:bulletin_student' student.pk active_session.pk %}" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-purple-500/20 flex items-center gap-2 self-start">
+        <i class="fa-solid fa-scroll"></i> Voir mon Bulletin Officiel
+    </a>
+    {% endif %}
+</div>
+
+<!-- SECTION 1 : MES INDICATEURS CLÉS -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Moyenne Générale -->
+    <div class="card-glass rounded-2xl p-5">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            {% if overall_average is not None %}
+            <span class="text-2xl font-extrabold {% if overall_average >= 14 %}text-emerald-400{% elif overall_average >= 10 %}text-amber-400{% else %}text-red-400{% endif %}">
+                {{ overall_average }}<span class="text-xs text-slate-400 font-normal">/20</span>
+            </span>
+            {% else %}
+            <span class="text-xl font-bold text-slate-500">—</span>
+            {% endif %}
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Moyenne ({{ active_session.name|default:"Session" }})</p>
+    </div>
+
+    <!-- Absences -->
+    <div class="card-glass rounded-2xl p-5">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-xmark"></i>
+            </div>
+            <span class="text-2xl font-extrabold {% if absences_count > 0 %}text-orange-400{% else %}text-white{% endif %}">{{ absences_count }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Absences Totales</p>
+    </div>
+
+    <!-- Retards -->
+    <div class="card-glass rounded-2xl p-5">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-clock"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-white">{{ late_count }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Retards Signalés</p>
+    </div>
+
+    <!-- Emploi du Temps -->
+    <div class="card-glass rounded-2xl p-5">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
+                <i class="fa-regular fa-calendar-days"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-white">{{ timetable|length }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Cours / Semaine</p>
+    </div>
+</div>
+
+<!-- SECTION 2 : NOTES ET RÉSULTATS + EMPLOI DU TEMPS -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Dernières Notes -->
+    <div class="card-glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-marker text-brand-400"></i> Mes Dernières Évaluations
+            </h3>
+            {% if active_session and student %}
+            <a href="{% url 'exams:bulletin_student' student.pk active_session.pk %}" class="text-xs text-brand-400 hover:text-brand-300">Voir bulletin complet</a>
+            {% endif %}
+        </div>
+
+        <div class="space-y-3">
+            {% for grade in recent_grades %}
+            <div class="p-3.5 rounded-xl bg-slate-800/40 border border-white/5 flex items-center justify-between">
+                <div class="flex-1 min-w-0 pr-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-semibold text-white truncate">{{ grade.subject.name }}</span>
+                        <span class="text-xs text-slate-400">{{ grade.exam_session.name }}</span>
+                    </div>
+                    <!-- Barre de progression -->
+                    <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full {% if grade.marks_obtained >= 14 %}bg-emerald-500{% elif grade.marks_obtained >= 10 %}bg-amber-500{% else %}bg-red-500{% endif %}"
+                             style="width: calc({{ grade.marks_obtained }} / {{ grade.total_marks }} * 100%);"></div>
+                    </div>
+                </div>
+                <span class="text-base font-bold px-3 py-1 rounded-lg {% if grade.marks_obtained >= 14 %}bg-emerald-500/10 text-emerald-400{% elif grade.marks_obtained >= 10 %}bg-amber-500/10 text-amber-400{% else %}bg-red-500/10 text-red-400{% endif %}">
+                    {{ grade.marks_obtained }}/{{ grade.total_marks|floatformat:0 }}
+                </span>
+            </div>
+            {% empty %}
+            <p class="text-sm text-slate-500 text-center py-6">Aucune note enregistrée pour le moment.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Mon Emploi du Temps -->
+    <div class="card-glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-regular fa-calendar-days text-blue-400"></i> Emploi du Temps
+            </h3>
+            <a href="{% url 'academics:course_list' %}" class="text-xs text-blue-400 hover:text-blue-300">Voir tout</a>
+        </div>
+
+        <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+            {% for course in timetable %}
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold font-mono">
+                        {{ course.day|slice:":3" }}
+                    </span>
+                    <div>
+                        <p class="text-sm font-semibold text-white">{{ course.subject.name }}</p>
+                        <p class="text-xs text-slate-400">{{ course.teacher.user.get_full_name }} {% if course.room %}• Salle {{ course.room }}{% endif %}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-semibold text-slate-300">{{ course.start_time|time:"H:i" }} - {{ course.end_time|time:"H:i" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-slate-500 text-center py-6">Aucun cours planifié pour votre classe.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 3 : ASSIDUITÉ ET ANNONCES -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Historique des Absences -->
+    <div class="card-glass rounded-2xl p-6">
+        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-user text-orange-400"></i> Registre des Présences
+        </h3>
+        <div class="space-y-3">
+            {% for att in recent_attendances %}
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="h-8 w-8 rounded-full {% if att.status == 'ABSENT' %}bg-red-500/20 text-red-400{% elif att.status == 'LATE' %}bg-amber-500/20 text-amber-400{% else %}bg-emerald-500/20 text-emerald-400{% endif %} flex items-center justify-center font-bold text-xs">
+                        {% if att.status == 'ABSENT' %}<i class="fa-solid fa-xmark"></i>{% elif att.status == 'LATE' %}<i class="fa-solid fa-clock"></i>{% else %}<i class="fa-solid fa-check"></i>{% endif %}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">{{ att.date|date:"l d F Y" }}</p>
+                        {% if att.justification %}
+                        <p class="text-xs text-slate-400 italic">Justification: {{ att.justification }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold {% if att.status == 'ABSENT' %}bg-red-500/20 text-red-400{% elif att.status == 'LATE' %}bg-amber-500/20 text-amber-400{% else %}bg-emerald-500/20 text-emerald-400{% endif %}">
+                    {{ att.get_status_display }}
+                </span>
+            </div>
+            {% empty %}
+            <div class="text-center py-6 text-slate-400">
+                <i class="fa-solid fa-circle-check text-emerald-400 text-2xl mb-2"></i>
+                <p class="text-sm">Assiduité parfaite ! Aucune absence enregistrée.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Annonces Élèves -->
+    <div class="card-glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-purple-400"></i> Annonces Scolaires
+            </h3>
+            <a href="{% url 'communication:announcement_list' %}" class="text-xs text-purple-400 hover:text-purple-300">Toutes les annonces</a>
+        </div>
+
+        <div class="space-y-3">
+            {% for ann in announcements %}
+            <div class="p-4 rounded-xl bg-slate-800/40 border border-white/5">
+                <div class="flex items-center justify-between mb-1">
+                    <h4 class="text-sm font-bold text-white">{{ ann.title }}</h4>
+                    <span class="text-xs text-slate-500">{{ ann.date_created|date:"d M" }}</span>
+                </div>
+                <p class="text-xs text-slate-300 line-clamp-2">{{ ann.content }}</p>
+            </div>
+            {% empty %}
+            <p class="text-sm text-slate-500 text-center py-6">Aucune annonce pour le moment.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

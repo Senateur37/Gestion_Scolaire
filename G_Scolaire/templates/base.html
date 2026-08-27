@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-900 text-slate-200">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}G-Scolaire{% endblock %}</title>
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        },
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .card-glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Smooth transitions */
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Custom scrollbar for dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden font-sans antialiased bg-slate-900 text-slate-200">
+
+    {% if user.is_authenticated %}
+    <!-- Sidebar (Glassmorphism) -->
+    <div class="hidden md:flex md:flex-shrink-0 z-20">
+        <div class="flex flex-col w-72 glass text-slate-300">
+            <div class="flex items-center justify-center h-20 border-b border-white/5 px-4">
+                <span class="text-2xl font-bold flex items-center gap-3 text-white tracking-wide">
+                    <div class="bg-brand-500/20 p-2 rounded-lg text-brand-400">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    G-Scolaire
+                </span>
+            </div>
+            
+            <div class="flex-1 flex flex-col overflow-y-auto mt-4 px-3">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Navigation</p>
+                <nav class="flex-1 space-y-1">
+                    <a href="{% url 'dashboard' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                        <i class="fa-solid fa-house mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Accueil
+                    </a>
+                    
+                    {% if user.role == 'ADMIN' or user.is_superuser %}
+                        <!-- SECTION : PEDAGOGIE & CLASSES -->
+                        <div class="mt-4 mb-2">
+                            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pédagogie &amp; Classes</p>
+                        </div>
+                        <a href="{% url 'students:list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-user-graduate mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Élèves
+                        </a>
+                        <a href="{% url 'students:parent_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-people-roof mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Parents d'Élèves
+                        </a>
+                        <a href="{% url 'teachers:list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-chalkboard-user mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Enseignants
+                        </a>
+                        <a href="{% url 'academics:class_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-school mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Classes
+                        </a>
+                        <a href="{% url 'academics:enrollment_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-user-check mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Inscriptions Élèves
+                        </a>
+                        <a href="{% url 'academics:subject_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-book mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Matières
+                        </a>
+                        <a href="{% url 'academics:course_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-regular fa-calendar-days mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Emploi du temps
+                        </a>
+                        <a href="{% url 'attendance:list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-clipboard-user mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Absences &amp; Retards
+                        </a>
+
+                        <!-- SECTION : EVALUATIONS & BULLETINS -->
+                        <div class="mt-5 mb-2">
+                            <p class="px-3 text-xs font-semibold text-purple-400 uppercase tracking-wider">Examens &amp; Bulletins</p>
+                        </div>
+                        <a href="{% url 'exams:session_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-calendar-check mr-3 w-5 text-center text-slate-400 group-hover:text-purple-400"></i> Sessions d'Examen
+                        </a>
+                        <a href="{% url 'exams:mark_entry_select' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-pen-ruler mr-3 w-5 text-center text-slate-400 group-hover:text-purple-400"></i> Saisie des Notes
+                        </a>
+                        <a href="{% url 'exams:bulletin_select' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-scroll mr-3 w-5 text-center text-slate-400 group-hover:text-purple-400"></i> Bulletins par Classe
+                        </a>
+                        <a href="{% url 'exams:parent_bulletins' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-purple-300 hover:text-white hover:bg-purple-900/40 border border-purple-500/20">
+                            <i class="fa-solid fa-users mr-3 w-5 text-center text-purple-400"></i> Bulletins des Familles
+                        </a>
+
+                        <!-- SECTION : FINANCES & RH -->
+                        <div class="mt-5 mb-2">
+                            <p class="px-3 text-xs font-semibold text-emerald-400 uppercase tracking-wider">Finances &amp; Personnel</p>
+                        </div>
+                        <a href="{% url 'payments:list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-money-bill-wave mr-3 w-5 text-center text-slate-400 group-hover:text-emerald-400"></i> Comptabilité &amp; Frais
+                        </a>
+                        <a href="{% url 'hr:staff_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-users-gear mr-3 w-5 text-center text-slate-400 group-hover:text-emerald-400"></i> Ressources Humaines
+                        </a>
+                        <a href="{% url 'accounts:user_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-id-card mr-3 w-5 text-center text-slate-400 group-hover:text-emerald-400"></i> Comptes Utilisateurs
+                        </a>
+
+                        <!-- SECTION : SERVICES SCOLAIRES -->
+                        <div class="mt-5 mb-2">
+                            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Services Scolaires</p>
+                        </div>
+                        <a href="{% url 'inventory:dashboard' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-boxes-stacked mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Inventaire &amp; Stock
+                        </a>
+                        <a href="{% url 'library:book_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-book-open mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Bibliothèque
+                        </a>
+                        <a href="{% url 'transport:route_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-bus mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Transports
+                        </a>
+                        <a href="{% url 'hostel:hostel_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-bed mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Dortoirs &amp; Cantine
+                        </a>
+
+                        <!-- SECTION : COMMUNICATION & DATA -->
+                        <div class="mt-5 mb-2">
+                            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Communication &amp; Data</p>
+                        </div>
+                        <a href="{% url 'communication:announcement_list' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-bullhorn mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Annonces
+                        </a>
+                        <a href="{% url 'reports:analytics_hub' %}" class="nav-item group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-chart-pie mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Data Hub
+                        </a>
+
+                    {% elif user.role == 'TEACHER' %}
+                        <div class="mt-4 mb-2">
+                            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Espace Pédagogique</p>
+                        </div>
+                        <a href="{% url 'attendance:take' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-clipboard-user mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Faire l'Appel (Présences)
+                        </a>
+                        <a href="{% url 'exams:mark_entry_select' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-pen-to-square mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Saisie des Notes
+                        </a>
+                        <a href="{% url 'exams:bulletin_select' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-scroll mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Bulletins de Notes
+                        </a>
+                        <a href="{% url 'academics:course_list' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-regular fa-calendar-days mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Emploi du temps
+                        </a>
+                        <a href="{% url 'communication:announcement_list' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-bullhorn mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Annonces
+                        </a>
+
+                    {% elif user.role == 'PARENT' %}
+                        <div class="mt-4 mb-2">
+                            <p class="px-3 text-xs font-semibold text-purple-400 uppercase tracking-wider">Espace Famille</p>
+                        </div>
+                        <a href="{% url 'exams:parent_bulletins' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-white bg-purple-600/30 hover:bg-purple-600 border border-purple-500/30">
+                            <i class="fa-solid fa-scroll mr-3 w-5 text-center text-purple-300 group-hover:text-white"></i> Bulletins des Enfants
+                        </a>
+                        <a href="{% url 'communication:announcement_list' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-bullhorn mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Annonces &amp; Messages
+                        </a>
+                        <a href="{% url 'academics:course_list' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-regular fa-calendar-days mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Emploi du temps
+                        </a>
+
+                    {% elif user.role == 'STUDENT' %}
+                        <div class="mt-4 mb-2">
+                            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Espace Scolaire</p>
+                        </div>
+                        <a href="{% url 'exams:student_my_bulletin' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-white bg-brand-600/30 hover:bg-brand-600 border border-brand-500/30">
+                            <i class="fa-solid fa-scroll mr-3 w-5 text-center text-brand-300 group-hover:text-white"></i> Mon Bulletin de Notes
+                        </a>
+                        <a href="{% url 'academics:course_list' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-regular fa-calendar-days mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Mon Emploi du temps
+                        </a>
+                        <a href="{% url 'communication:announcement_list' %}" class="nav-item group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80">
+                            <i class="fa-solid fa-bullhorn mr-3 w-5 text-center text-slate-400 group-hover:text-brand-400"></i> Annonces
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+            
+            <!-- User Info (Bottom Sidebar) -->
+            <div class="flex-shrink-0 border-t border-white/5 p-4 m-3 rounded-xl bg-slate-800/50">
+                <div class="flex items-center w-full">
+                    <div class="h-10 w-10 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/20">
+                        {{ user.get_full_name|default:user.username|make_list|first|upper }}
+                    </div>
+                    <div class="ml-3 flex-1 overflow-hidden">
+                        <p class="text-sm font-semibold text-white truncate">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-xs font-medium text-brand-400">{{ user.get_role_display }}</p>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'logout' %}" class="mt-4">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full text-center text-sm bg-slate-700/50 hover:bg-red-500/20 hover:text-red-400 text-slate-300 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border border-white/5 hover:border-red-500/30">
+                        <i class="fa-solid fa-power-off"></i> Déconnexion
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content Area -->
+    <div class="flex flex-col w-0 flex-1 overflow-hidden relative">
+        <!-- Abstract Background Decoration -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Header Mobile -->
+        {% if user.is_authenticated %}
+        <div class="md:hidden flex items-center justify-between bg-slate-900 border-b border-white/5 h-16 px-4 z-10 relative">
+            <span class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-graduation-cap text-brand-400"></i> G-Scolaire
+            </span>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="text-slate-400 hover:text-red-400 transition-colors">
+                    <i class="fa-solid fa-power-off text-xl"></i>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <main class="flex-1 relative z-10 overflow-y-auto focus:outline-none">
+            <div class="py-8 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
+                <!-- Messages flash -->
+                {% if messages %}
+                    <div class="mb-8 space-y-3">
+                        {% for message in messages %}
+                            <div class="p-4 rounded-xl shadow-lg {% if message.tags == 'error' %}bg-red-900/40 text-red-200 border border-red-500/30{% elif message.tags == 'success' %}bg-brand-900/40 text-brand-200 border border-brand-500/30{% else %}bg-blue-900/40 text-blue-200 border border-blue-500/30{% endif %} flex items-center gap-3 backdrop-blur-sm">
+                                {% if message.tags == 'error' %}
+                                    <i class="fa-solid fa-circle-exclamation text-red-400"></i>
+                                {% elif message.tags == 'success' %}
+                                    <i class="fa-solid fa-circle-check text-brand-400"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info text-blue-400"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

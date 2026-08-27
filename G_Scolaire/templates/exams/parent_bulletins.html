@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulletins de mes Enfants — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Espace Famille</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Bulletins de Notes de vos Enfants</h1>
+        <p class="text-slate-400 mt-1 text-sm">Consultez et imprimez les bulletins officiels par session trimestrielle / semestrielle.</p>
+    </div>
+    
+    <!-- Sélecteurs : Parent (si admin) et Session -->
+    <div class="flex flex-wrap items-center gap-3">
+        {% if all_parents %}
+        <form method="get" class="flex items-center gap-2">
+            <input type="hidden" name="session_id" value="{{ current_session.pk }}">
+            <label for="parent_id" class="text-xs text-slate-400 font-semibold uppercase">Parent :</label>
+            <select name="parent_id" id="parent_id" onchange="this.form.submit()" class="bg-slate-800/80 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/50 outline-none">
+                {% for p in all_parents %}
+                <option value="{{ p.pk }}" {% if parent.pk == p.pk %}selected{% endif %}>{{ p.user.get_full_name }} ({{ p.student_set.count }} enfant(s))</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+
+        {% if sessions %}
+        <form method="get" class="flex items-center gap-2">
+            {% if parent and all_parents %}<input type="hidden" name="parent_id" value="{{ parent.pk }}">{% endif %}
+            <label for="session_id" class="text-xs text-slate-400 font-semibold uppercase">Session :</label>
+            <select name="session_id" id="session_id" onchange="this.form.submit()" class="bg-slate-800/80 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/50 outline-none">
+                {% for s in sessions %}
+                <option value="{{ s.pk }}" {% if current_session.pk == s.pk %}selected{% endif %}>{{ s.name }} {% if s.is_active %}(Active){% endif %}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if children_bulletins %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for item in children_bulletins %}
+        <div class="card-glass rounded-3xl p-6 sm:p-8 hover:border-brand-500/30 transition-all flex flex-col justify-between">
+            <div>
+                <!-- En-tête enfant -->
+                <div class="flex items-center justify-between pb-4 mb-4 border-b border-white/5">
+                    <div class="flex items-center gap-3">
+                        <div class="h-12 w-12 rounded-2xl bg-brand-500/20 text-brand-400 border border-brand-500/30 flex items-center justify-center font-bold text-lg">
+                            {{ item.student.user.first_name|first|upper }}
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">{{ item.student.user.get_full_name }}</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Classe : <strong class="text-brand-300">{{ item.school_class|default:"Non assignée" }}</strong></p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono text-slate-400 bg-slate-800 px-2 py-1 rounded-lg">
+                        {{ item.student.registration_number }}
+                    </span>
+                </div>
+
+                <!-- Résultats -->
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-slate-800/40 rounded-2xl p-4 border border-white/5 text-center">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Moyenne Générale</p>
+                        {% if item.average is not None %}
+                        <p class="text-2xl font-extrabold mt-1 {% if item.average >= 14 %}text-emerald-400{% elif item.average >= 10 %}text-amber-400{% else %}text-red-400{% endif %}">
+                            {{ item.average }}<span class="text-xs text-slate-400 font-normal">/20</span>
+                        </p>
+                        {% else %}
+                        <p class="text-xl font-bold text-slate-500 mt-1">—</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-slate-800/40 rounded-2xl p-4 border border-white/5 text-center">
+                        <p class="text-xs text-slate-400 font-semibold uppercase">Mention</p>
+                        <p class="text-lg font-bold text-white mt-1.5">{{ item.mention|default:"—" }}</p>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-400 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-brand-400"></i>
+                    {{ item.results_count }} matière(s) évaluée(s) pour la session <strong class="text-white">{{ current_session.name }}</strong>.
+                </p>
+            </div>
+
+            <!-- Bouton d'accès au bulletin -->
+            {% if current_session %}
+            <a href="{% url 'exams:bulletin_student' item.student.pk current_session.pk %}" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold text-sm transition-colors shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-scroll"></i> Consulter le Bulletin Complet &amp; Imprimer
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card-glass rounded-3xl p-12 text-center text-slate-400 max-w-lg mx-auto">
+        <i class="fa-solid fa-folder-open text-4xl text-slate-500 mb-3"></i>
+        <h3 class="text-lg font-bold text-white mb-1">Aucun bulletin disponible</h3>
+        <p class="text-sm">Aucun enfant n'est rattaché à votre compte ou aucune évaluation n'a été enregistrée pour cette session.</p>
+    </div>
+{% endif %}
+{% endblock %}

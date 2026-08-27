@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Bulletins — G-Scolaire{% endblock %}
+{% block content %}
+<div class="mb-8">
+    <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Résultats scolaires</p>
+    <h1 class="text-3xl font-bold text-white tracking-tight">Bulletins de Notes</h1>
+    <p class="text-slate-400 mt-1 text-sm">Choisissez une classe et une session pour consulter les bulletins.</p>
+</div>
+
+<div class="card-glass rounded-2xl p-8 max-w-xl mx-auto">
+    <form method="GET" id="selectForm">
+        <div class="space-y-5">
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-2">
+                    <i class="fa-solid fa-school mr-1.5 text-brand-400"></i> Classe
+                </label>
+                <select name="class_id" id="class_id" class="w-full bg-slate-800/60 border border-slate-600/50 text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-colors" required>
+                    <option value="">— Sélectionner une classe —</option>
+                    {% for cls in classes %}
+                    <option value="{{ cls.pk }}">{{ cls }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-slate-300 mb-2">
+                    <i class="fa-solid fa-calendar-check mr-1.5 text-purple-400"></i> Session
+                </label>
+                <select name="session_id" id="session_id" class="w-full bg-slate-800/60 border border-slate-600/50 text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-colors" required>
+                    <option value="">— Sélectionner une session —</option>
+                    {% for session in sessions %}
+                    <option value="{{ session.pk }}">{{ session.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-scroll"></i> Voir les bulletins de la classe
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('selectForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const cls = document.getElementById('class_id').value;
+    const sess = document.getElementById('session_id').value;
+    if (cls && sess) {
+        const base = "{% url 'exams:bulletin_class' 0 0 %}";
+        const url = base.replace('/0/session/0/', '/' + cls + '/session/' + sess + '/');
+        window.location.href = url;
+    }
+});
+</script>
+{% endblock %}

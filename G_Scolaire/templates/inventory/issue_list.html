@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Attributions de Matériel — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Ressources & Prêts</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Attributions d'Équipements</h1>
+        <p class="text-slate-400 mt-1 text-sm">Suivi du matériel confié aux enseignants et au personnel administratif.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="{% url 'inventory:dashboard' %}" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-colors border border-slate-700">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Tableau de bord
+        </a>
+        <a href="{% url 'inventory:issue_create' %}" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-purple-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Nouvelle Attribution
+        </a>
+    </div>
+</div>
+
+<div class="card-glass rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-white/5">
+            <thead class="bg-slate-800/60">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase">Équipement</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase">Bénéficiaire (Staff)</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Quantité</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Date d'Attribution</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase">Date de Retour</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                {% for issue in issues %}
+                <tr class="hover:bg-slate-800/30 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-white">{{ issue.asset.name }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center gap-3">
+                            <div class="h-8 w-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs">
+                                {{ issue.issued_to.user.first_name|first|upper }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-white">{{ issue.issued_to.user.get_full_name }}</p>
+                                <p class="text-xs text-slate-400">{{ issue.issued_to.position }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                        <span class="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-xs font-bold">
+                            {{ issue.quantity }} unité(s)
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-slate-400">
+                        {{ issue.issue_date|date:"d/m/Y" }}
+                    </td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap text-sm">
+                        {% if issue.return_date %}
+                            <span class="text-slate-300">{{ issue.return_date|date:"d/m/Y" }}</span>
+                        {% else %}
+                            <span class="text-slate-500 italic">Indéterminée</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-slate-500 text-sm">
+                        Aucune attribution de matériel enregistrée.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

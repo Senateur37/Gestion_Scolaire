@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Nouvelle Annonce — G-Scolaire{% endblock %}
+{% block content %}
+
+<div class="mb-8">
+    <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Communication</p>
+    <h1 class="text-3xl font-bold text-white tracking-tight">Publier une Annonce</h1>
+</div>
+
+<div class="card-glass rounded-2xl p-8 max-w-2xl mx-auto">
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Titre -->
+        <div>
+            <label for="title" class="block text-sm font-semibold text-slate-300 mb-2">
+                <i class="fa-solid fa-heading mr-1.5 text-brand-400"></i> Titre *
+            </label>
+            <input type="text" id="title" name="title" required maxlength="200"
+                   placeholder="Titre de l'annonce..."
+                   class="w-full bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-colors">
+        </div>
+
+        <!-- Audience -->
+        <div>
+            <label for="audience" class="block text-sm font-semibold text-slate-300 mb-2">
+                <i class="fa-solid fa-users mr-1.5 text-blue-400"></i> Destinataires *
+            </label>
+            <select id="audience" name="audience"
+                    class="w-full bg-slate-800/60 border border-slate-600/50 text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-colors">
+                {% for value, label in audience_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Contenu -->
+        <div>
+            <label for="content" class="block text-sm font-semibold text-slate-300 mb-2">
+                <i class="fa-solid fa-align-left mr-1.5 text-purple-400"></i> Message *
+            </label>
+            <textarea id="content" name="content" rows="6" required
+                      placeholder="Rédigez votre annonce ici..."
+                      class="w-full bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-colors resize-none leading-relaxed"></textarea>
+        </div>
+
+        <div class="flex gap-3">
+            <a href="{% url 'communication:announcement_list' %}" class="flex-1 text-center py-3 bg-slate-700/50 hover:bg-slate-700 text-white rounded-xl text-sm font-medium transition-colors border border-slate-600/50">
+                Annuler
+            </a>
+            <button type="submit" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bullhorn"></i> Publier l'annonce
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

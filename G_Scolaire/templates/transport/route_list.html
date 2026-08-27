@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load school_tags %}
+
+{% block title %}Itinéraires - Transports - G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Itinéraires de Transport</h1>
+        <p class="text-slate-400 mt-2 text-sm">Circuits et tarifs des bus scolaires.</p>
+    </div>
+    {% if user.role == 'ADMIN' %}
+    <div class="flex items-center gap-3">
+        <a href="{% url 'transport:vehicle_list' %}" class="px-4 py-2 bg-slate-700/50 text-white hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-600/50">
+            <i class="fa-solid fa-bus mr-2"></i> Flotte de Bus
+        </a>
+        <a href="{% url 'transport:route_create' %}" class="px-4 py-2 bg-brand-600 text-white hover:bg-brand-500 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-brand-500/20">
+            <i class="fa-solid fa-plus mr-2"></i> Créer un Itinéraire
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card-glass rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-white/5">
+            <thead class="bg-slate-800/50">
+                <tr>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                        Nom du Circuit
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                        Arrêts Principaux
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                        Frais (Mensuel/Annuel)
+                    </th>
+                    {% if user.role == 'ADMIN' %}
+                    <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                        Actions
+                    </th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5 bg-transparent">
+                {% for route in routes %}
+                <tr class="hover:bg-slate-800/30 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="h-10 w-10 rounded-lg bg-brand-500/20 flex items-center justify-center text-brand-400">
+                                <i class="fa-solid fa-route"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-bold text-white">{{ route.name }}</p>
+                                <p class="text-xs text-slate-400">{{ route.vehicles.count }} bus assigné(s)</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-300 max-w-md truncate">
+                        {{ route.stops }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-emerald-400">
+                        {{ route.fee|fcfa }}
+                    </td>
+                    {% if user.role == 'ADMIN' %}
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{% url 'transport:route_update' route.pk %}" class="text-brand-400 hover:text-brand-300 mr-3 transition-colors"><i class="fa-solid fa-pen"></i></a>
+                        <a href="{% url 'transport:route_delete' route.pk %}" class="text-red-400 hover:text-red-300 transition-colors"><i class="fa-solid fa-trash"></i></a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-sm text-slate-400">
+                        Aucun itinéraire configuré.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

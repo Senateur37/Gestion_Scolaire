@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des Parents — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Espace Familles</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Parents d'Élèves</h1>
+        <p class="text-slate-400 mt-1 text-sm">Gestion des comptes tuteurs / parents et rattachement aux élèves.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="{% url 'exams:parent_bulletins' %}" class="px-4 py-2 bg-purple-600/20 text-purple-300 hover:bg-purple-600 hover:text-white rounded-xl text-sm font-medium transition-colors border border-purple-500/30 flex items-center gap-2">
+            <i class="fa-solid fa-scroll"></i> Vue Bulletins Familles
+        </a>
+        <a href="{% url 'students:parent_create' %}" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-brand-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-user-plus"></i> Ajouter un Parent
+        </a>
+    </div>
+</div>
+
+<div class="card-glass rounded-3xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-white/5">
+            <thead class="bg-slate-800/60">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Parent / Tuteur</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Identifiant &amp; Contact</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Enfant(s) Rattaché(s)</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-300 uppercase tracking-wider">Bulletins</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold text-slate-300 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                {% for parent in parents %}
+                <tr class="hover:bg-slate-800/30 transition-colors">
+                    <!-- Nom et Prénom -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold text-sm">
+                                {{ parent.user.first_name|first|upper }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-white">{{ parent.user.get_full_name }}</p>
+                                <p class="text-xs text-slate-400">{{ parent.address|default:"Adresse non renseignée" }}</p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Contact -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="space-y-0.5">
+                            <p class="text-xs font-mono text-brand-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-shield text-slate-500"></i> {{ parent.user.username }}
+                            </p>
+                            {% if parent.user.phone %}
+                            <p class="text-xs text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-phone text-slate-500"></i> {{ parent.user.phone }}
+                            </p>
+                            {% endif %}
+                            {% if parent.user.email %}
+                            <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-envelope text-slate-500"></i> {{ parent.user.email }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Enfants rattachés -->
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for child in parent.student_set.all %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                                <i class="fa-solid fa-user-graduate text-xs"></i> {{ child.user.get_full_name }}
+                            </span>
+                            {% empty %}
+                            <span class="text-xs text-slate-500 italic">Aucun enfant lié</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+
+                    <!-- Accès Bulletin -->
+                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                        <a href="{% url 'exams:parent_bulletins' %}?parent_id={{ parent.pk }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 transition-colors">
+                            <i class="fa-solid fa-scroll"></i> Voir Bulletins
+                        </a>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="{% url 'students:parent_update' parent.pk %}" class="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </a>
+                            <a href="{% url 'students:parent_delete' parent.pk %}" class="p-2 text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-slate-500 text-sm">
+                        <i class="fa-solid fa-people-roof text-3xl mb-3 block text-slate-600"></i>
+                        Aucun compte parent créé pour le moment.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

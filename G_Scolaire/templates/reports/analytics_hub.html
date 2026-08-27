@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Centre de Rapports - G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Centre de Rapports</h1>
+        <p class="text-slate-400 mt-2 text-sm">Analytique, statistiques et exportations de données.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="{% url 'reports:export_pdf' %}" class="px-4 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-red-500/30 flex items-center">
+            <i class="fa-regular fa-file-pdf mr-2"></i> PDF Élèves
+        </a>
+        <a href="{% url 'reports:export_excel' %}" class="px-4 py-2 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-emerald-500/30 flex items-center">
+            <i class="fa-regular fa-file-excel mr-2"></i> Excel Finances
+        </a>
+    </div>
+</div>
+
+<!-- Graphiques Chart.js -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Finances -->
+    <div class="card-glass rounded-2xl p-6 relative">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+            <i class="fa-solid fa-wallet text-brand-400 mr-2"></i> État des Paiements
+        </h3>
+        <div class="relative h-64">
+            <canvas id="financeChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Démographie -->
+    <div class="card-glass rounded-2xl p-6 relative">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+            <i class="fa-solid fa-users text-blue-400 mr-2"></i> Démographie
+        </h3>
+        <div class="relative h-64">
+            <canvas id="demoChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Répartition par classe -->
+    <div class="card-glass rounded-2xl p-6 lg:col-span-2 relative">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+            <i class="fa-solid fa-chalkboard-user text-purple-400 mr-2"></i> Effectifs par Classe
+        </h3>
+        <div class="relative h-72">
+            <canvas id="classChart"></canvas>
+        </div>
+    </div>
+
+    <!-- RH: Paies -->
+    <div class="card-glass rounded-2xl p-6 relative">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+            <i class="fa-solid fa-money-check-dollar text-brand-400 mr-2"></i> Paiement des Salaires
+        </h3>
+        <div class="relative h-64">
+            <canvas id="hrPayrollChart"></canvas>
+        </div>
+    </div>
+
+    <!-- RH: Congés -->
+    <div class="card-glass rounded-2xl p-6 relative">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+            <i class="fa-solid fa-umbrella-beach text-blue-400 mr-2"></i> Demandes de Congés
+        </h3>
+        <div class="relative h-64">
+            <canvas id="hrLeaveChart"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+
+    // 1. Finance Chart (Doughnut)
+    const ctxFinance = document.getElementById('financeChart').getContext('2d');
+    new Chart(ctxFinance, {
+        type: 'doughnut',
+        data: {
+            labels: ['Collecté', 'Reste à recouvrer'],
+            datasets: [{
+                data: {{ finance_data|safe }},
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.8)', // emerald-500
+                    'rgba(239, 68, 68, 0.8)'   // red-500
+                ],
+                borderColor: [
+                    'rgba(16, 185, 129, 1)',
+                    'rgba(239, 68, 68, 1)'
+                ],
+                borderWidth: 1,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // 2. Demo Chart (Pie)
+    const ctxDemo = document.getElementById('demoChart').getContext('2d');
+    new Chart(ctxDemo, {
+        type: 'pie',
+        data: {
+            labels: ['Élèves', 'Enseignants'],
+            datasets: [{
+                data: {{ demographics_data|safe }},
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)', // blue-500
+                    'rgba(139, 92, 246, 0.8)'  // violet-500
+                ],
+                borderColor: [
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(139, 92, 246, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // 3. Class Chart (Bar)
+    const ctxClass = document.getElementById('classChart').getContext('2d');
+    new Chart(ctxClass, {
+        type: 'bar',
+        data: {
+            labels: {{ class_names|safe }},
+            datasets: [{
+                label: 'Nombre d\'élèves',
+                data: {{ class_counts|safe }},
+                backgroundColor: 'rgba(99, 102, 241, 0.5)', // indigo-500
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 2,
+                borderRadius: 6,
+                hoverBackgroundColor: 'rgba(99, 102, 241, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // 4. HR Payroll Chart (Doughnut)
+    const ctxHrPayroll = document.getElementById('hrPayrollChart').getContext('2d');
+    new Chart(ctxHrPayroll, {
+        type: 'doughnut',
+        data: {
+            labels: ['Salaires Versés', 'Salaires en Attente'],
+            datasets: [{
+                data: {{ hr_payroll_data|safe }},
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.8)', // emerald-500
+                    'rgba(245, 158, 11, 0.8)'  // amber-500
+                ],
+                borderColor: [
+                    'rgba(16, 185, 129, 1)',
+                    'rgba(245, 158, 11, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // 5. HR Leave Chart (Pie)
+    const ctxHrLeave = document.getElementById('hrLeaveChart').getContext('2d');
+    new Chart(ctxHrLeave, {
+        type: 'pie',
+        data: {
+            labels: ['Approuvés', 'En attente', 'Refusés'],
+            datasets: [{
+                data: {{ hr_leave_data|safe }},
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.8)', // emerald-500
+                    'rgba(59, 130, 246, 0.8)', // blue-500
+                    'rgba(239, 68, 68, 0.8)'   // red-500
+                ],
+                borderColor: [
+                    'rgba(16, 185, 129, 1)',
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(239, 68, 68, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

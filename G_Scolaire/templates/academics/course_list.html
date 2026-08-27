@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Emploi du Temps — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Planification</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Emploi du Temps</h1>
+        <p class="text-slate-400 mt-1 text-sm">
+            {% if selected_class %}
+                Planning de : <span class="text-brand-300 font-semibold">{{ selected_class }}</span>
+            {% elif user.role == 'TEACHER' %}
+                Votre planning de cours de la semaine.
+            {% else %}
+                Sélectionnez une classe pour afficher son planning.
+            {% endif %}
+        </p>
+    </div>
+    {% if user.role == 'ADMIN' and selected_class %}
+    <a href="{% url 'academics:course_create' %}" class="px-4 py-2 bg-brand-600 text-white hover:bg-brand-500 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-brand-500/20 flex items-center self-start">
+        <i class="fa-solid fa-plus mr-2"></i> Ajouter un cours
+    </a>
+    {% endif %}
+</div>
+
+{% if user.role == 'ADMIN' %}
+<!-- Sélecteur de classe -->
+<div class="card-glass rounded-2xl p-4 mb-6 flex flex-wrap gap-2 items-center">
+    <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider mr-2 flex items-center gap-1.5">
+        <i class="fa-solid fa-filter text-slate-500"></i> Classe :
+    </span>
+    {% for cls in classes %}
+    <a href="?class_id={{ cls.pk }}"
+       class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+              {% if selected_class.pk == cls.pk %}
+                bg-brand-600 text-white shadow-lg shadow-brand-500/20
+              {% else %}
+                bg-slate-800/60 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/50
+              {% endif %}">
+        {% if cls.section %}Niv.{{ cls.level }} {{ cls.section }}{% else %}Niv.{{ cls.level }}{% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if selected_class or user.role == 'TEACHER' %}
+
+<!-- Grille Emploi du Temps par jour -->
+<div class="overflow-x-auto pb-4">
+    <div class="flex gap-3 min-w-max">
+        {% for day, day_courses in courses_by_day_list %}
+        <div class="flex flex-col gap-3 w-44">
+            <!-- Entête jour -->
+            <div class="card-glass rounded-xl px-3 py-3 text-center sticky top-0 z-10" style="border-bottom: 2px solid rgba(16, 185, 129, 0.4);">
+                <p class="text-xs font-bold text-white uppercase tracking-widest">{{ day }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">{{ day_courses|length }} cours</p>
+            </div>
+
+            <!-- Cours du jour -->
+            {% if day_courses %}
+                {% for course in day_courses %}
+                {% with color_index=forloop.counter0 %}
+                <div class="card-glass rounded-xl p-3.5 relative group hover:-translate-y-0.5 hover:border-brand-500/30 hover:shadow-md hover:shadow-brand-500/10 transition-all duration-200 border-l-2"
+                     style="border-left-color: {{ course.color }}">
+                    <!-- Horaire badge -->
+                    <span class="inline-block text-xs font-bold px-2 py-0.5 rounded-full mb-2" style="background-color: {{ course.color }}22; color: {{ course.color }};">
+                        {{ course.start_time|time:"H:i" }}–{{ course.end_time|time:"H:i" }}
+                    </span>
+
+                    <!-- Matière -->
+                    <p class="text-sm font-bold text-white leading-snug">{{ course.subject.name }}</p>
+
+                    <!-- Enseignant / Classe -->
+                    <p class="text-xs text-slate-400 mt-1.5 flex items-start gap-1 leading-tight">
+                        <i class="fa-solid fa-user-tie text-slate-500 mt-0.5 flex-shrink-0 text-xs"></i>
+                        {% if user.role == 'TEACHER' %}
+                            {{ course.school_class }}
+                        {% else %}
+                            {{ course.teacher.user.get_full_name }}
+                        {% endif %}
+                    </p>
+
+                    <!-- Salle -->
+                    {% if course.room %}
+                    <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                        <i class="fa-solid fa-door-open flex-shrink-0"></i> Salle {{ course.room }}
+                    </p>
+                    {% endif %}
+
+                    <!-- Bouton supprimer (admin) -->
+                    {% if user.role == 'ADMIN' %}
+                    <a href="{% url 'academics:course_delete' course.pk %}"
+                       class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 p-1 bg-red-500/10 hover:bg-red-500/20 rounded-md"
+                       title="Supprimer">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endwith %}
+                {% endfor %}
+            {% else %}
+            <div class="rounded-xl px-3 py-5 text-center border border-dashed border-slate-700/40">
+                <p class="text-xs text-slate-600 italic">Libre</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% else %}
+<!-- État vide -->
+<div class="card-glass rounded-2xl p-16 text-center">
+    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 mb-5">
+        <i class="fa-regular fa-calendar-days text-3xl text-slate-500"></i>
+    </div>
+    <h3 class="text-xl font-bold text-white mb-2">Aucune classe sélectionnée</h3>
+    <p class="text-slate-400 text-sm max-w-sm mx-auto">
+        Cliquez sur une classe dans le sélecteur ci-dessus pour afficher son emploi du temps.
+    </p>
+    {% if user.role == 'ADMIN' and not classes %}
+    <a href="{% url 'academics:class_create' %}" class="mt-6 inline-flex items-center px-4 py-2 bg-brand-600 text-white hover:bg-brand-500 rounded-lg text-sm font-medium transition-colors">
+        <i class="fa-solid fa-plus mr-2"></i> Créer une classe d'abord
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

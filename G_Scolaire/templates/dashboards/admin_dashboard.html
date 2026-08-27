@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load school_tags %}
+
+{% block title %}Tableau de Bord Administrateur — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Administration Globale</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Tableau de Bord</h1>
+        <p class="text-slate-400 mt-1 text-sm">Bienvenue, {{ user.get_full_name|default:user.username }}. Vue d'ensemble de l'établissement.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <a href="{% url 'reports:export_excel' %}" class="px-4 py-2 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-xl text-sm font-medium transition-colors border border-emerald-500/30 flex items-center">
+            <i class="fa-regular fa-file-excel mr-2"></i> Export Finances
+        </a>
+        <a href="{% url 'reports:export_pdf' %}" class="px-4 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-xl text-sm font-medium transition-colors border border-red-500/30 flex items-center">
+            <i class="fa-regular fa-file-pdf mr-2"></i> Export Élèves
+        </a>
+    </div>
+</div>
+
+<!-- SECTION 1 : STATISTIQUES PRINCIPALES -->
+<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <!-- Élèves -->
+    <a href="{% url 'students:list' %}" class="card-glass rounded-2xl p-5 hover:border-brand-500/30 hover:-translate-y-1 transition-all block group">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-xl group-hover:bg-brand-500 group-hover:text-white transition-all">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-white">{{ total_students }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Élèves Inscrits</p>
+    </a>
+
+    <!-- Enseignants -->
+    <a href="{% url 'teachers:list' %}" class="card-glass rounded-2xl p-5 hover:border-blue-500/30 hover:-translate-y-1 transition-all block group">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl group-hover:bg-blue-500 group-hover:text-white transition-all">
+                <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-white">{{ total_teachers }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Corps Enseignant</p>
+    </a>
+
+    <!-- Classes -->
+    <a href="{% url 'academics:class_list' %}" class="card-glass rounded-2xl p-5 hover:border-purple-500/30 hover:-translate-y-1 transition-all block group">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl group-hover:bg-purple-500 group-hover:text-white transition-all">
+                <i class="fa-solid fa-school"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-white">{{ total_classes }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Classes Actives</p>
+    </a>
+
+    <!-- Absences -->
+    <a href="{% url 'attendance:list' %}" class="card-glass rounded-2xl p-5 hover:border-orange-500/30 hover:-translate-y-1 transition-all block group">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-xl group-hover:bg-orange-500 group-hover:text-white transition-all">
+                <i class="fa-solid fa-user-slash"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-white">{{ total_absences }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Absences (ce mois)</p>
+    </a>
+
+    <!-- Recouvrement Paiements -->
+    <a href="{% url 'payments:list' %}" class="card-glass rounded-2xl p-5 hover:border-emerald-500/30 hover:-translate-y-1 transition-all block group">
+        <div class="flex items-center justify-between">
+            <div class="h-12 w-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                <i class="fa-solid fa-money-bill-trend-up"></i>
+            </div>
+            <span class="text-2xl font-extrabold text-emerald-400">{{ total_collected|fcfa }}</span>
+        </div>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Paiements Encaissés</p>
+    </a>
+</div>
+
+<!-- SECTION 2 : GRAPHIQUES EN TEMPS RÉEL -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Effectifs par classe (Bar) -->
+    <div class="card-glass rounded-2xl p-6 lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-chart-simple text-brand-400"></i> Répartition des Élèves par Classe
+            </h3>
+            <span class="text-xs text-slate-400">Total: {{ total_students }} élèves</span>
+        </div>
+        <div class="relative h-64">
+            <canvas id="classChart"></canvas>
+        </div>
+    </div>
+
+    <!-- État financier (Doughnut) -->
+    <div class="card-glass rounded-2xl p-6">
+        <h3 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-wallet text-emerald-400"></i> Recouvrement Scolarité
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Reste à recouvrer: <span class="text-amber-400 font-bold">{{ remaining_due|fcfa }}</span></p>
+        <div class="relative h-60">
+            <canvas id="financeChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 3 : DERNIÈRES ACTIVITÉS -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Derniers Paiements -->
+    <div class="card-glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-receipt text-teal-400"></i> Derniers Paiements Enregistrés
+            </h3>
+            <a href="{% url 'payments:list' %}" class="text-xs text-brand-400 hover:text-brand-300">Voir tout</a>
+        </div>
+        <div class="space-y-3">
+            {% for payment in recent_payments %}
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                        {{ payment.student.user.first_name|first|upper }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">{{ payment.student.user.get_full_name }}</p>
+                        <p class="text-xs text-slate-400">{{ payment.description }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-emerald-400">+{{ payment.amount_paid|fcfa }}</p>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">{{ payment.get_status_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-slate-500 text-center py-4">Aucun paiement enregistré récemment.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Dernières Absences -->
+    <div class="card-glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-user-clock text-orange-400"></i> Dernières Absences Signalées
+            </h3>
+            <a href="{% url 'attendance:list' %}" class="text-xs text-brand-400 hover:text-brand-300">Voir tout</a>
+        </div>
+        <div class="space-y-3">
+            {% for att in recent_absences %}
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-xs">
+                        {{ att.student.user.first_name|first|upper }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">{{ att.student.user.get_full_name }}</p>
+                        <p class="text-xs text-slate-400">{{ att.date|date:"d/m/Y" }}</p>
+                    </div>
+                </div>
+                <div>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
+                        Absent
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-slate-500 text-center py-4">Aucune absence récente.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+
+    // Graphique Effectifs par classe
+    const ctxClass = document.getElementById('classChart').getContext('2d');
+    new Chart(ctxClass, {
+        type: 'bar',
+        data: {
+            labels: {{ class_names|safe }},
+            datasets: [{
+                label: "Nombre d'élèves",
+                data: {{ class_counts|safe }},
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                hoverBackgroundColor: 'rgba(16, 185, 129, 0.9)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Graphique Finances
+    const ctxFinance = document.getElementById('financeChart').getContext('2d');
+    new Chart(ctxFinance, {
+        type: 'doughnut',
+        data: {
+            labels: ['Encaissé', 'Reste à payer'],
+            datasets: [{
+                data: {{ finance_data|safe }},
+                backgroundColor: ['rgba(16, 185, 129, 0.85)', 'rgba(245, 158, 11, 0.85)'],
+                borderColor: ['rgba(16, 185, 129, 1)', 'rgba(245, 158, 11, 1)'],
+                borderWidth: 1,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, padding: 15 }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

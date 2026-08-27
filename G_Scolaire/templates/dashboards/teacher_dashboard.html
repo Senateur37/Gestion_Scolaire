@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Espace Enseignant — G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <p class="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">Espace Pédagogique</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Bonjour, {{ user.get_full_name|default:user.username }} 👋</h1>
+        <p class="text-slate-400 mt-1 text-sm">Votre tableau de bord pour la gestion de vos classes, notes et présences.</p>
+    </div>
+    {% if active_session %}
+    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+        <i class="fa-solid fa-calendar-check text-purple-400"></i> Session Active : {{ active_session.name }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ACTIONS RAPIDES -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <a href="{% url 'exams:mark_entry_select' %}" class="card-glass rounded-2xl p-5 hover:border-brand-500/40 hover:-translate-y-1 transition-all group block">
+        <div class="flex items-center gap-4">
+            <div class="h-12 w-12 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-xl group-hover:bg-brand-500 group-hover:text-white transition-all">
+                <i class="fa-solid fa-marker"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-white group-hover:text-brand-400 transition-colors">Saisie des Notes</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Enregistrer les notes d'examens</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'attendance:take' %}" class="card-glass rounded-2xl p-5 hover:border-orange-500/40 hover:-translate-y-1 transition-all group block">
+        <div class="flex items-center gap-4">
+            <div class="h-12 w-12 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-xl group-hover:bg-orange-500 group-hover:text-white transition-all">
+                <i class="fa-solid fa-clipboard-user"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-white group-hover:text-orange-400 transition-colors">Faire l'Appel</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Marquer présences et absences</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'academics:course_list' %}" class="card-glass rounded-2xl p-5 hover:border-blue-500/40 hover:-translate-y-1 transition-all group block">
+        <div class="flex items-center gap-4">
+            <div class="h-12 w-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl group-hover:bg-blue-500 group-hover:text-white transition-all">
+                <i class="fa-regular fa-calendar-days"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition-colors">Emploi du Temps</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Consulter vos horaires de cours</p>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- SECTION : MES CLASSES AFFECTÉES -->
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-school text-brand-400"></i> Mes Classes Affectées
+        </h2>
+        <span class="text-xs text-slate-400">{{ assigned_classes|length }} classe(s) • {{ total_students_taught }} élève(s) au total</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for cls in assigned_classes %}
+        <div class="card-glass rounded-2xl p-5 hover:border-brand-500/30 transition-all flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="h-10 w-10 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm">
+                        N{{ cls.level }}
+                    </div>
+                    {% if cls.main_teacher == teacher %}
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        Prof. Principal
+                    </span>
+                    {% endif %}
+                </div>
+                <h3 class="text-lg font-bold text-white">{{ cls }}</h3>
+                <p class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-slate-500"></i> {{ cls.student_count|default:0 }} élève(s) inscrit(s)
+                </p>
+            </div>
+
+            <!-- Actions rapides pour cette classe -->
+            <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/5">
+                <a href="{% url 'attendance:take' %}?class_id={{ cls.pk }}" class="px-3 py-2 text-center bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-clipboard-user"></i> Faire l'appel
+                </a>
+                <a href="{% url 'exams:mark_entry_select' %}" class="px-3 py-2 text-center bg-brand-500/10 hover:bg-brand-500/20 text-brand-300 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-pen-ruler"></i> Saisir notes
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full card-glass rounded-2xl p-8 text-center text-slate-400">
+            <i class="fa-solid fa-chalkboard-user text-3xl text-slate-500 mb-3"></i>
+            <p>Aucune classe ne vous a été attribuée pour le moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- SECTION : PLANNING & ANNONCES -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Mes Cours de la Semaine -->
+    <div class="card-glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-regular fa-clock text-blue-400"></i> Mon Emploi du Temps Hebdomadaire
+            </h3>
+            <a href="{% url 'academics:course_list' %}" class="text-xs text-brand-400 hover:text-brand-300">Voir la grille</a>
+        </div>
+
+        <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+            {% for course in courses %}
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-white/5 hover:border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold font-mono">
+                        {{ course.day|slice:":3" }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">{{ course.subject.name }}</p>
+                        <p class="text-xs text-slate-400">{{ course.school_class }} {% if course.room %}• Salle {{ course.room }}{% endif %}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-semibold text-slate-300">{{ course.start_time|time:"H:i" }} - {{ course.end_time|time:"H:i" }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-slate-500 text-center py-6">Aucun cours planifié dans votre emploi du temps.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Annonces de l'école -->
+    <div class="card-glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-purple-400"></i> Annonces & Communications
+            </h3>
+            <a href="{% url 'communication:announcement_list' %}" class="text-xs text-purple-400 hover:text-purple-300">Toutes les annonces</a>
+        </div>
+
+        <div class="space-y-3">
+            {% for ann in announcements %}
+            <div class="p-4 rounded-xl bg-slate-800/40 border border-white/5">
+                <div class="flex items-center justify-between mb-1">
+                    <h4 class="text-sm font-bold text-white">{{ ann.title }}</h4>
+                    <span class="text-xs text-slate-500">{{ ann.date_created|date:"d M" }}</span>
+                </div>
+                <p class="text-xs text-slate-300 line-clamp-2">{{ ann.content }}</p>
+            </div>
+            {% empty %}
+            <p class="text-sm text-slate-500 text-center py-6">Aucune annonce pour les enseignants.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

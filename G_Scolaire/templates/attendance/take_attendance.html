@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Marquer les Présences - G-Scolaire{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-white tracking-tight">Marquer les Présences</h1>
+    <p class="text-slate-400 mt-2 text-sm">Sélectionnez une classe et une date pour enregistrer les absences et retards.</p>
+</div>
+
+<!-- Filtres -->
+<div class="card-glass rounded-2xl p-6 mb-8 border-t-4 border-brand-500">
+    <form method="GET" class="flex flex-col md:flex-row gap-4 items-end">
+        <div class="w-full md:w-1/3">
+            <label for="class_id" class="block text-sm font-medium text-slate-300 mb-2">Classe</label>
+            <select name="class_id" id="class_id" class="w-full bg-slate-800/50 border border-slate-600/50 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors outline-none" required>
+                <option value="">-- Sélectionnez une classe --</option>
+                {% for c in classes %}
+                <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="w-full md:w-1/3">
+            <label for="date" class="block text-sm font-medium text-slate-300 mb-2">Date</label>
+            <input type="date" name="date" id="date" value="{{ selected_date }}" class="w-full bg-slate-800/50 border border-slate-600/50 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors outline-none" required>
+        </div>
+        <div class="w-full md:w-auto">
+            <button type="submit" class="w-full md:w-auto px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-filter mr-2"></i> Afficher les élèves
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if selected_class %}
+<div class="card-glass rounded-2xl overflow-hidden">
+    <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        
+        <div class="bg-brand-900/30 px-6 py-4 border-b border-white/5 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-brand-300"><i class="fa-solid fa-users mr-2"></i> {{ selected_class }}</h3>
+            <span class="text-sm font-medium text-slate-400"><i class="fa-regular fa-calendar mr-1"></i> {{ selected_date }}</span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-white/5">
+                <thead class="bg-slate-800/50">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                            Élève
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider w-64">
+                            Statut de présence
+                        </th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                            Justification (Optionnel)
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5 bg-transparent">
+                    {% for item in students_data %}
+                    <tr class="hover:bg-slate-800/30 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold border border-brand-500/30 text-xs">
+                                    {{ item.student.user.first_name|default:item.student.user.username|make_list|first|upper }}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-white">{{ item.student.user.get_full_name }}</p>
+                                    <p class="text-xs text-slate-400 font-mono mt-0.5">{{ item.student.registration_number }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-col gap-2">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="status_{{ item.student.id }}" value="PRESENT" class="form-radio text-brand-500 focus:ring-brand-500 h-4 w-4 bg-slate-800 border-slate-600" {% if item.status == 'PRESENT' %}checked{% endif %}>
+                                    <span class="ml-2 text-sm text-slate-300 group-hover:text-white transition-colors">Présent</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="status_{{ item.student.id }}" value="LATE" class="form-radio text-yellow-500 focus:ring-yellow-500 h-4 w-4 bg-slate-800 border-slate-600" {% if item.status == 'LATE' %}checked{% endif %}>
+                                    <span class="ml-2 text-sm text-slate-300 group-hover:text-white transition-colors">En retard</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="status_{{ item.student.id }}" value="ABSENT" class="form-radio text-red-500 focus:ring-red-500 h-4 w-4 bg-slate-800 border-slate-600" {% if item.status == 'ABSENT' %}checked{% endif %}>
+                                    <span class="ml-2 text-sm text-slate-300 group-hover:text-white transition-colors">Absent</span>
+                                </label>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="text" name="justification_{{ item.student.id }}" value="{{ item.justification }}" placeholder="Ex: Maladie, problème transport..." class="w-full bg-slate-800/50 border border-slate-600/50 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-colors outline-none">
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800 mb-4">
+                                <i class="fa-solid fa-users-slash text-2xl text-slate-500"></i>
+                            </div>
+                            <h3 class="text-sm font-medium text-white">Aucun élève inscrit</h3>
+                            <p class="mt-1 text-sm text-slate-400">Cette classe ne contient actuellement aucun élève.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if students_data %}
+        <div class="px-6 py-4 bg-slate-800/50 border-t border-white/5 flex justify-end gap-4">
+            <a href="{% url 'attendance:list' %}" class="px-6 py-2.5 bg-slate-700/50 text-white hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-600/50">
+                Annuler
+            </a>
+            <button type="submit" class="px-6 py-2.5 bg-brand-600 text-white hover:bg-brand-500 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-brand-500/20">
+                <i class="fa-solid fa-save mr-2"></i> Enregistrer les présences
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endif %}
+{% endblock %}
