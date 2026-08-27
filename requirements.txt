@@ -7,5 +7,11 @@ psycopg==3.3.4
 psycopg-binary==3.3.4
 sqlparse==0.6.0
 tzdata==2026.3
-xhtml2pdf
-openpyxl
+openpyxl==3.1.5
+reportlab==5.0.1
+django-crispy-forms==2.7
+crispy-tailwind==1.0.3
+dj-database-url==3.1.2
+python-dotenv==1.2.3
+gunicorn==26.2.0
+whitenoise==6.12.0
