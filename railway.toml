@@ -1,0 +1,12 @@
+# Railway Configuration
+# Documentation: https://docs.railway.app/reference/config-as-code
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "gunicorn --chdir G_Scolaire G_Scolaire.wsgi:application --bind 0.0.0.0:\"
+healthcheckPath = "/accounts/login/"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

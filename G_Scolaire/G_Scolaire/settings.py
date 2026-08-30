@@ -16,11 +16,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-x(4_by^k+j=wu$&k1zr6s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com,.netlify.app').split(',') if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com,.railway.app').split(',') if h.strip()]
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() 
-    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com,https://*.netlify.app,http://localhost,http://127.0.0.1').split(',') 
+    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com,https://*.railway.app,http://localhost,http://127.0.0.1').split(',') 
     if origin.strip()
 ]
 
